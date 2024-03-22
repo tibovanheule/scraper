@@ -37,4 +37,4 @@ class IMDBSpider(scrapy.Spider):
         name = name.strip()
         name = re.sub(r'^\d+\.\s*', '', name)
         return name
-s
+
