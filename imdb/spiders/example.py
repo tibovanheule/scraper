@@ -1,3 +1,7 @@
+import re
+import time
+from random import random
+
 import scrapy
 
 
@@ -28,7 +32,6 @@ class IMDBSpider(scrapy.Spider):
                 'user_votes': user_vote
             }
             self.log(f'Relevant Elements: {movie_dict}')
-            movie_data.append(movie_dict)
         delay = random.uniform(2, 5)
         self.log(f'Delaying for {delay} seconds.')
         time.sleep(delay)
