@@ -1,36 +1,72 @@
+import re
+
+import scrapy
+from pymongo import MongoClient
+from scrapy import Request
+
+
+def get_id(url):
+    return re.match(r"^(https://)?(http://)?www\.imdb\.com/[a-z]*/(tt[0-9]*)/[a-zA-Z0-9?/_=]*$", url).group(3)
+
+
 class IMDBSpider(scrapy.Spider):
     name = 'imdb_spider'
-
-    def start_requests(self):
-        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'}
-        yield scrapy.Request("https://www.imdb.com/chart/top/?pf_rd_m=A2FGELUUNOQJNL&pf_rd_p=470df400-70d9-4f35-bb05-8646a1195842&pf_rd_r=5V6VAGPEK222QB9E0SZ8&pf_rd_s=right-4&pf_rd_t=15506&pf_rd_i=toptv&ref_=chttvtp_ql_3", headers=headers, callback=self.parse)
+    start_urls = ("https://www.imdb.com/title/tt20850406/?ref_=tt_sims_tt_t_1", "https://www.imdb.com/title/tt0241527/",
+                  "https://www.imdb.com/title/tt0266543/?ref_=hm_tpks_tt_i_12_pd_tp1_pbr_ic",
+                  "https://www.imdb.com/title/tt2788316/?ref_=hm_top_tt_i_5",
+                  "https://www.imdb.com/title/tt10919420/?ref_=hm_tpks_tt_i_15_pd_tp1_pbr_ic",
+                  "https://www.imdb.com/title/tt0382932/?ref_=hm_tpks_tt_i_18_pd_tp1_pbr_ic",
+                  "https://www.imdb.com/title/tt1632701/?ref_=hm_tpks_tt_i_26_pd_tp1_pbr_ic",
+                  "https://www.imdb.com/title/tt14230458/?ref_=hm_top_tt_i_2",
+                  "https://www.imdb.com/title/tt15239678/?ref_=hm_top_tt_i_3",
+                  "https://www.imdb.com/title/tt0068646/?ref_=nv_sr_srsg_3_tt_4_nm_4_q_godf",
+                  "https://www.imdb.com/title/tt0108052/?ref_=hm_tpks_tt_i_4_pd_tp1_pbr_ic")
+    myclient = MongoClient("mongodb://localhost:27017/")
+    custom_settings = {
+        'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+    }
 
     def parse(self, response):
-        # iterate movie sections
-        for movie in response.css(".cli-parent"):
-            # movie name
-            movie_name = movie.css('h3::text').get()
-            # movie year
-            movie_year = movie.css('.cli-title-metadata-item:first-child::text').get()
-            # movie ratings
-            movie_rating = movie.css('.ipc-rating-star--base::text').get()
-            # user votings
-            user_vote = movie.xpath('.//span[@class="ipc-rating-star--voteCount"]//text()').getall()
-            user_vote = user_vote[1].strip('"()')
-            self.log(f'Processing: {movie_name}, {movie_year}, {movie_rating}, {user_vote}')
-            movie_dict = {
-                'movie_name': self.extract_name(movie_name),
-                'movie_year': movie_year.strip(),
-                'movie_rating': movie_rating,
-                'user_votes': user_vote
-            }
-            self.log(f'Relevant Elements: {movie_dict}')
-            movie_data.append(movie_dict)
-        delay = random.uniform(2, 5)
-        self.log(f'Delaying for {delay} seconds.')
-        time.sleep(delay)
+        # database
+        db = self.myclient["IMDB"]
 
-    def extract_name(self, name):
-        name = name.strip()
-        name = re.sub(r'^\d+\.\s*', '', name)
-        return name
+        # Created or Switched to collection
+        # names: GeeksForGeeks
+        collection = db["movies"]
+        # iterate movie sections
+        data = {}
+        data['title'] = response.css('.hero__primary-text::text').get()
+
+        data['year'] = response.css('ul.ipc-inline-list:nth-child(2) > li:nth-child(1) > a:nth-child(1)::text').get()
+
+        genre = response.xpath(
+            '//*[@data-testid="genres"]/div[contains(@class,"ipc-chip-list__scroller")]/a/span/text()').extract() or None
+        if genre:
+            data['genre'] = genre
+        data['description'] = response.css('.hlbAws::text').get() or None
+        directors = response.xpath(
+            "//li[contains(.//span, 'Director')]/div/ul/li/a/text()").extract() or None
+        if directors:
+            data['directors'] = list(set(directors))
+
+        writers = response.xpath(
+            '//*[contains(.//a, "Writers")]/div/ul/li/a/text()').extract() or None
+        if writers:
+            data['writers'] = list(set(writers))
+
+        stars = response.xpath(
+            "//*[contains(.//a, 'Stars')]/div/ul/li/a/text()").extract() or None
+        if stars:
+            data['stars'] = list(set(stars))
+
+        data["_id"] = get_id(response.url)
+        if collection.count_documents({'_id': data["_id"]}) == 0:
+            collection.insert_one(data)
+        del data
+        for link in response.css(".ipc-poster-card__title"):
+            url = f"https://www.imdb.com{link.attrib['href']}"
+            id = get_id(url)
+            if collection.count_documents({'_id': id}) < 1:
+                del id
+                yield Request(url, callback=self.parse)
+        yield None
