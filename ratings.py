@@ -30,13 +30,16 @@ class RatingSpider(scrapy.Spider):
             # iterate movie sections
             ratings = []
             for rating in response.css(".review-container"):
+                user = rating.css('.display-name-link a::text').get().strip()
+                if collection.count_documents({'_id': f"{get_id(response.url)}_{user}"}) > 0:
+                    continue
                 # review title
                 movie_name = rating.css('.title::text').get().strip()
                 # movie year
                 movie_rating = rating.css('.rating-other-user-rating span::text').get() or None
                 if movie_rating is None:
                     continue
-                user = rating.css('.display-name-link a::text').get().strip()
+
 
                 date = rating.css('.review-date::text').get().strip()
                 text = rating.css('.content .text::text').get().strip()
