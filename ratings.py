@@ -29,36 +29,41 @@ class RatingSpider(scrapy.Spider):
             collection = db["ratings"]
             # iterate movie sections
             ratings = []
-            for rating in response.css(".review-container"):
-                user = rating.css('.display-name-link a::text').get().strip()
-                if collection.count_documents({'_id': f"{get_id(response.url)}_{user}"}) > 0:
-                    continue
-                # review title
-                movie_name = rating.css('.title::text').get().strip()
-                # movie year
-                movie_rating = rating.css('.rating-other-user-rating span::text').get() or None
-                if movie_rating is None:
-                    continue
+            if collection.count_documents({'movie_id': get_id(response.url)}) > 10:
+                yield None
+            else:
+                for rating in response.css(".review-container"):
+                    user = rating.css('.display-name-link a::text').get().strip()
+                    if collection.count_documents({'_id': f"{get_id(response.url)}_{user}"}) > 0:
+                        continue
+
+                    # review title
+                    movie_name = rating.css('.title::text').get().strip()
+                    # movie year
+                    movie_rating = rating.css('.rating-other-user-rating span::text').get() or None
+                    if movie_rating is None:
+                        continue
 
 
-                date = rating.css('.review-date::text').get().strip()
-                text = rating.css('.content .text::text').get().strip()
-                ratings.append({
-                    '_id': f"{get_id(response.url)}_{user}",
-                    'rating_title': movie_name,
-                    'rating': movie_rating,
-                    'movie_id': get_id(response.url),
-                    'date': date,
-                    'text': text,
-                    'user': user
-                })
-            if ratings is not None and len(ratings)>0:
-                collection.insert_many(ratings)
-            data_key = None
-            if "data-key" in response.css('.load-more-data').attrib:
-                data_key = response.css('.load-more-data').attrib["data-key"]
-            if "data-ajaxurl" in response.css('.load-more-data').attrib:
-                self.data_url = response.css('.load-more-data').attrib["data-ajaxurl"]
-            if data_key is not None and self.data_url is not None:
-                url = f"https://www.imdb.com{self.data_url}?ref_=undefined&paginationKey={data_key}"
-                yield Request(url, callback=self.parse)
+                    date = rating.css('.review-date::text').get().strip()
+                    text = rating.css('.content .text::text').get().strip()
+                    ratings.append({
+                        '_id': f"{get_id(response.url)}_{user}",
+                        'rating_title': movie_name,
+                        'rating': movie_rating,
+                        'movie_id': get_id(response.url),
+                        'date': date,
+                        'text': text,
+                        'user': user
+                    })
+                if ratings is not None and len(ratings)>0:
+                    collection.insert_many(ratings)
+                data_key = None
+                if "data-key" in response.css('.load-more-data').attrib:
+                    data_key = response.css('.load-more-data').attrib["data-key"]
+                if "data-ajaxurl" in response.css('.load-more-data').attrib:
+                    self.data_url = response.css('.load-more-data').attrib["data-ajaxurl"]
+                if data_key is not None and self.data_url is not None:
+                    url = f"https://www.imdb.com{self.data_url}?ref_=undefined&paginationKey={data_key}"
+                    yield Request(url, callback=self.parse)
+                yield None
