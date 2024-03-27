@@ -19,7 +19,7 @@ class RatingSpider(scrapy.Spider):
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
     }
 
-    def parse(self, response):
+    def parse(self, response, **kwargs):
         if response.status is not 404:
             # database
             db = self.myclient["IMDB"]
