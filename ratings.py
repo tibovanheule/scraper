@@ -29,7 +29,7 @@ class RatingSpider(scrapy.Spider):
             collection = db["ratings"]
             # iterate movie sections
             ratings = []
-            if collection.count_documents({'movie_id': get_id(response.url)}) > 50:
+            if collection.count_documents({'movie_id': get_id(response.url)}) > 100:
                 yield None
             else:
                 for rating in response.css(".review-container"):
