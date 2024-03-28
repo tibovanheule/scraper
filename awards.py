@@ -47,7 +47,6 @@ class IMDBSpider(scrapy.Spider):
                 subdata["link"] = link
                 subdata["awards or nominee"] = awards
                 data[title] = subdata
-            self.log(data)
             collection.insert_one(data)
             del data
         yield None
