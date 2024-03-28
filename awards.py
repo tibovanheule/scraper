@@ -10,8 +10,8 @@ def get_id(url):
 
 class IMDBSpider(scrapy.Spider):
     name = 'imdb_spider'
-    start_urls = ("https://www.imdb.com/title/tt0096697/awards/?ref_=tt_awd",)
     myclient = MongoClient("mongodb://localhost:27017/")
+    start_urls = [f"https://www.imdb.com/title/{i['_id']}/awards/" for i in myclient["IMDB"]["movies"].find({})]
     custom_settings = {
         'USER_AGENT': 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
     }
