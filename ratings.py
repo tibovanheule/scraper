@@ -10,7 +10,7 @@ def get_id(url):
 
 
 def get_user_id(url):
-    return re.match(r"/title/(ur[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(1)
+    return re.match(r"/user/(ur[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(1)
     
 
 
