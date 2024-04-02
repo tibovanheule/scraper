@@ -73,14 +73,14 @@ class RatingSpider(scrapy.Spider):
                     })
                 except Exception as e:
                     continue
-                if ratings is not None and len(ratings)>0:
-                    collection.insert_many(ratings)
-                data_key = None
-                if "data-key" in response.css('.load-more-data').attrib:
-                    data_key = response.css('.load-more-data').attrib["data-key"]
-                if "data-ajaxurl" in response.css('.load-more-data').attrib:
-                    self.data_url = response.css('.load-more-data').attrib["data-ajaxurl"]
-                if data_key is not None and self.data_url is not None:
-                    url = f"https://www.imdb.com{self.data_url}?ref_=undefined&paginationKey={data_key}"
-                    yield Request(url, callback=self.parse)
-                yield None
+            if ratings is not None and len(ratings)>0:
+                collection.insert_many(ratings)
+            data_key = None
+            if "data-key" in response.css('.load-more-data').attrib:
+                data_key = response.css('.load-more-data').attrib["data-key"]
+            if "data-ajaxurl" in response.css('.load-more-data').attrib:
+                self.data_url = response.css('.load-more-data').attrib["data-ajaxurl"]
+            if data_key is not None and self.data_url is not None:
+                url = f"https://www.imdb.com{self.data_url}?ref_=undefined&paginationKey={data_key}"
+                yield Request(url, callback=self.parse)
+            yield None
