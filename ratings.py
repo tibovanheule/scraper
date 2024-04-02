@@ -57,7 +57,7 @@ class RatingSpider(scrapy.Spider):
 
                     text = rating.css('.content .text::text').get().strip()
                     ratings.append({
-                        '_id': f"{get_id(response.url)}_{user}",
+                        '_id': f"{get_id(response.url)}_{user}_{date}",
                         'rating_title': movie_name,
                         'rating': movie_rating,
                         'movie_id': get_id(response.url),
