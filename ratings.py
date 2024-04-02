@@ -13,9 +13,7 @@ def get_user_id(url):
     return re.match(r"/user/(ur[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(1)
 
 def get_review_id(url):
-    return re.match(r"^(https://)?(http://)?www\.imdb\.com/review/(rw[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(3)
-    
-
+    return re.match(r"^/review/(rw[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(1)
 
 class RatingSpider(scrapy.Spider):
     myclient = MongoClient("mongodb://localhost:27017/")
