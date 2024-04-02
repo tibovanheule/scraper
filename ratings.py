@@ -36,46 +36,43 @@ class RatingSpider(scrapy.Spider):
             # iterate movie sections
             ratings = []
             movie_id = get_id(response.url)
-            if collection.count_documents({'movie_id': movie_id}) > 100:
-                yield None
-            else:
-                for rating in response.css(".review-container"):
-                    try:
-                        attrib_review = rating.css('.title').attrib
-                        id = ""
-                        if "href" in attrib_review:
-                            id = get_review_id(attrib_review["href"])
-                        else:
-                            continue
-                        if collection.count_documents({'_id': id}) > 0:
-                            continue
-                        user = ""
-                        if "href" in rating.css('.display-name-link a').attrib:
-                            user = get_user_id(rating.css('.display-name-link a').attrib["href"])
-                        
-                        username = rating.css('.display-name-link a::text').get().strip()
-                        date = rating.css('.review-date::text').get()
-                        # review title
-                        title = rating.css('.title::text').get()
-                        # movie year
-                        movie_rating = rating.css('.rating-other-user-rating span::text').get() or None
-                        if movie_rating is None:
-                            continue
-    
-    
-                        text = rating.css('.content .text::text').get()
-                        ratings.append({
-                            '_id': id,
-                            'rating_title': title,
-                            'rating': movie_rating,
-                            'movie_id': movie_id,
-                            'date': date,
-                            'text': text,
-                            'user_id': user,
-                            'username': username
-                        })
-                    except Exception as e:
+            for rating in response.css(".review-container"):
+                try:
+                    attrib_review = rating.css('.title').attrib
+                    id = ""
+                    if "href" in attrib_review:
+                        id = get_review_id(attrib_review["href"])
+                    else:
                         continue
+                    if collection.count_documents({'_id': id}) > 0:
+                        continue
+                    user = ""
+                    if "href" in rating.css('.display-name-link a').attrib:
+                        user = get_user_id(rating.css('.display-name-link a').attrib["href"])
+                    
+                    username = rating.css('.display-name-link a::text').get().strip()
+                    date = rating.css('.review-date::text').get()
+                    # review title
+                    title = rating.css('.title::text').get()
+                    # movie year
+                    movie_rating = rating.css('.rating-other-user-rating span::text').get() or None
+                    if movie_rating is None:
+                        continue
+
+
+                    text = rating.css('.content .text::text').get()
+                    ratings.append({
+                        '_id': id,
+                        'rating_title': title,
+                        'rating': movie_rating,
+                        'movie_id': movie_id,
+                        'date': date,
+                        'text': text,
+                        'user_id': user,
+                        'username': username
+                    })
+                except Exception as e:
+                    continue
                 if ratings is not None and len(ratings)>0:
                     collection.insert_many(ratings)
                 data_key = None
