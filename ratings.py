@@ -9,6 +9,11 @@ def get_id(url):
     return re.match(r"^(https://)?(http://)?www\.imdb\.com/title/(tt[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(3)
 
 
+def get_user_id(url):
+    return re.match(r"/title/(ur[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(1)
+    
+
+
 class RatingSpider(scrapy.Spider):
     myclient = MongoClient("mongodb://localhost:27017/")
     name = 'imdb_spider'
@@ -33,7 +38,11 @@ class RatingSpider(scrapy.Spider):
                 yield None
             else:
                 for rating in response.css(".review-container"):
-                    user = rating.css('.display-name-link a::text').get().strip()
+                    user = ""
+                    if "href" in rating.css('.display-name-link a').attrib:
+                        user = get_user_id(rating.css('.display-name-link a').attrib["href"])
+                    
+                    username = rating.css('.display-name-link a::text').get().strip()
                     if collection.count_documents({'_id': f"{get_id(response.url)}_{user}"}) > 0:
                         continue
 
@@ -54,7 +63,8 @@ class RatingSpider(scrapy.Spider):
                         'movie_id': get_id(response.url),
                         'date': date,
                         'text': text,
-                        'user': user
+                        'user_id': user,
+                        'username': username
                     })
                 if ratings is not None and len(ratings)>0:
                     collection.insert_many(ratings)
