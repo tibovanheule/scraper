@@ -11,6 +11,9 @@ def get_id(url):
 
 def get_user_id(url):
     return re.match(r"/user/(ur[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(1)
+
+def get_review_id(url):
+    return re.match(r"^(https://)?(http://)?www\.imdb\.com/review/(rw[0-9]*)/[a-zA-Z0-9?/_=&]*$", url).group(3)
     
 
 
@@ -38,15 +41,20 @@ class RatingSpider(scrapy.Spider):
                 yield None
             else:
                 for rating in response.css(".review-container"):
+                    attrib_review = rating.css('.title').attrib
+                    id = ""
+                    if "href" in attrib_review:
+                        id = get_review_id(attrib_review["href"])
+                    else:
+                        continue
+                    if collection.count_documents({'_id': id}) > 0:
+                        continue
                     user = ""
                     if "href" in rating.css('.display-name-link a').attrib:
                         user = get_user_id(rating.css('.display-name-link a').attrib["href"])
                     
                     username = rating.css('.display-name-link a::text').get().strip()
                     date = rating.css('.review-date::text').get().strip()
-                    if collection.count_documents({'_id': f"{get_id(response.url)}_{user}_{date}"}) > 0:
-                        continue
-
                     # review title
                     movie_name = rating.css('.title::text').get().strip()
                     # movie year
@@ -57,7 +65,7 @@ class RatingSpider(scrapy.Spider):
 
                     text = rating.css('.content .text::text').get().strip()
                     ratings.append({
-                        '_id': f"{get_id(response.url)}_{user}_{date}",
+                        '_id': id,
                         'rating_title': movie_name,
                         'rating': movie_rating,
                         'movie_id': get_id(response.url),
