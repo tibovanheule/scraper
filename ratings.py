@@ -43,7 +43,8 @@ class RatingSpider(scrapy.Spider):
                         user = get_user_id(rating.css('.display-name-link a').attrib["href"])
                     
                     username = rating.css('.display-name-link a::text').get().strip()
-                    if collection.count_documents({'_id': f"{get_id(response.url)}_{user}"}) > 0:
+                    date = rating.css('.review-date::text').get().strip()
+                    if collection.count_documents({'_id': f"{get_id(response.url)}_{user}_{date}"}) > 0:
                         continue
 
                     # review title
@@ -54,7 +55,6 @@ class RatingSpider(scrapy.Spider):
                         continue
 
 
-                    date = rating.css('.review-date::text').get().strip()
                     text = rating.css('.content .text::text').get().strip()
                     ratings.append({
                         '_id': f"{get_id(response.url)}_{user}",
