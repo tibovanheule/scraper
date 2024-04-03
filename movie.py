@@ -76,7 +76,7 @@ class IMDBSpider(scrapy.Spider):
             if update:
                 id = data["_id"]
                 del data["_id"]
-                collection.update_one({"_id":id},{"_set":data},{upsert:True})
+                collection.update_one({"_id":id},{"_set":data},{"upsert":True})
             else:
                 collection.insert_one(data)
             del data
