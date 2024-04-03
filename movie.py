@@ -38,7 +38,7 @@ class IMDBSpider(scrapy.Spider):
 
         # Created or Switched to collection
         # names: GeeksForGeeks
-        collection = db["movies2"]
+        collection = db["movies"]
         # iterate movie sections
         data = {"_id": get_id(response.url)}
         if update or collection.count_documents({'_id': data["_id"]}) == 0:
