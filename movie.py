@@ -53,14 +53,16 @@ class IMDBSpider(scrapy.Spider):
                 "//li[contains(.//span, 'Director')]/div/ul/li/a/text()").extract() or None
             if directors:
                 data['directors'] = list(set(directors))
-            data["type"] = response.xpath(
-                "//meta[contains(@property, 'og:type')]/@content").extract() or None
-            data["image"] = response.xpath(
-                "//meta[contains(@property, 'og:image')]/@content").extract() or None
+            data["item_type"] = response.xpath(
+                "//meta[contains(@property, 'og:type')]/@content").extract()
+            data["cover"] = response.xpath(
+                "//meta[contains(@property, 'og:image')]/@content").extract()
             data["origin"] = response.xpath(
                 "//*[contains(.//*, 'Country of origin')]/div/ul/li/a/text()").extract() or None
             data["Runtime"] = response.xpath(
                 "//*[contains(.//*, 'Runtime')]/div/text()").extract() or None
+            if data["Runtime"] is not None and len(data["Runtime"]) > 0:
+                data["Runtime"] = "".join(data["Runtime"])
             data["release date"] = response.xpath(
                 "//*[contains(.//*, 'Release date')]/div/ul/li/a/text()").extract() or None
 
