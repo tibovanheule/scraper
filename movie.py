@@ -32,6 +32,7 @@ class IMDBSpider(scrapy.Spider):
     }
 
     def parse(self, response):
+        update = self.update
         # database
         db = self.myclient["IMDB"]
 
